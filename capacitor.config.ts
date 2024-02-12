@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'go-unknown',
+  appId: 'site.snewbie.go.unknown',
+  appName: 'Go Unknown',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

@@ -1,4 +1,4 @@
-package io.ionic.starter;
+package site.snewbie.go.unknown;
 
 import com.getcapacitor.BridgeActivity;
 
