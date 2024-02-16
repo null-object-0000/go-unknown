@@ -9,6 +9,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import { onBeforeMount } from 'vue';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
+// 注意这里的色值没有走 css 变量，所以需要手动设置
 const backgroundColor = {
   light: '#f7f9fa',
   dark: '#0C0C0C'
@@ -29,3 +30,9 @@ onBeforeMount(async () => {
   toggleDarkTheme(prefersDark.matches);
 });
 </script>
+
+<style>
+ion-content {
+  --background: var(--salt-color-background)
+}
+</style>

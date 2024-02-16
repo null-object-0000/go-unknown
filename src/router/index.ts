@@ -26,9 +26,13 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'mine',
         component: () => import('@/views/MinePage.vue')
+      },
+      {
+        path: 'mine/salt-demo',
+        component: () => import('@/views/mine/SaltDemoPage.vue')
       }
     ]
-  }
+  },
 ]
 
 const router = createRouter({

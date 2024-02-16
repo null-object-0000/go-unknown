@@ -27,19 +27,19 @@ import { IonTabBar, IonTabButton, IonTabs, IonLabel, IonIcon, IonPage, IonRouter
 import { compass, flag, person } from 'ionicons/icons';
 </script>
 
-<style>
+<style scoped>
 ion-tabs ion-tab-button {
   color: rgba(140, 140, 140, 0.5)
-}
-
-ion-tabs ion-tab-button.tab-selected {
-  color: var(--salt-color-hightlight)
 }
 
 @media (prefers-color-scheme: dark) {
   ion-tabs ion-tab-button {
     color: rgba(225, 230, 235, 0.5)
   }
+}
+
+ion-tabs ion-tab-button.tab-selected {
+  color: var(--salt-color-highlight)
 }
 
 ion-tabs ion-icon {
