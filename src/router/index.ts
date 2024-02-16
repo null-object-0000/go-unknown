@@ -5,7 +5,7 @@ import TabsPage from '../views/TabsPage.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/tabs/tab1'
+    redirect: '/tabs'
   },
   {
     path: '/tabs/',
@@ -13,22 +13,26 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '',
-        redirect: '/tabs/tab1'
+        redirect: '/tabs/go'
       },
       {
-        path: 'tab1',
-        component: () => import('@/views/Tab1Page.vue')
+        path: 'go',
+        component: () => import('@/views/GoPage.vue')
       },
       {
-        path: 'tab2',
-        component: () => import('@/views/Tab2Page.vue')
+        path: 'clock',
+        component: () => import('@/views/ClockPage.vue')
       },
       {
-        path: 'tab3',
-        component: () => import('@/views/Tab3Page.vue')
+        path: 'mine',
+        component: () => import('@/views/MinePage.vue')
+      },
+      {
+        path: 'mine/salt-demo',
+        component: () => import('@/views/mine/SaltDemoPage.vue')
       }
     ]
-  }
+  },
 ]
 
 const router = createRouter({
