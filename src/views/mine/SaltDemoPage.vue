@@ -51,16 +51,15 @@
 
             <salt-rounded-column title="Dialog 对话框">
                 <salt-yes-no-dialog v-model:open="model.yesNoDialog" title="YesNoDialog" content="这是一个是否确认的对话框"
-                    teleport="body" @dismissRequest="model.yesNoDialog = false"
-                    @confirm="model.yesNoDialog = false"></salt-yes-no-dialog>
+                    @dismissRequest="model.yesNoDialog = false" @confirm="model.yesNoDialog = false"></salt-yes-no-dialog>
                 <salt-item text="YesNoDialog" @click="model.yesNoDialog = true"></salt-item>
 
-                <salt-yes-dialog v-model:open="model.yesDialog" title="YesDialog" content="这是一个是否确认的对话框" teleport="body"
+                <salt-yes-dialog v-model:open="model.yesDialog" title="YesDialog" content="这是一个是否确认的对话框"
                     @dismissRequest="model.yesDialog = false"></salt-yes-dialog>
                 <salt-item text="YesDialog" @click="model.yesDialog = true"></salt-item>
 
                 <salt-input-dialog v-model:open="model.inputDialog.open" v-model="model.inputDialog.text" title="文本输入"
-                    teleport="body" @dismissRequest="model.inputDialog.open = false"
+                    @dismissRequest="model.inputDialog.open = false"
                     @confirm="model.inputDialog.open = false"></salt-input-dialog>
                 <salt-item text="InputDialog" @click="model.inputDialog.open = true"></salt-item>
             </salt-rounded-column>
@@ -112,6 +111,7 @@ const onBack = () => {
 
 <style scoped>
 .vue-superscript {
+    color: var(--salt-text-style-sub-color);
     font-size: var(--salt-text-style-sub-font-size);
     line-height: var(--salt-text-style-sub-line-height);
 
