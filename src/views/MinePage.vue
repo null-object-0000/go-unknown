@@ -2,16 +2,26 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <salt-rounded-column>
-        <salt-item text="离线地图" icon-painter="qr-code"></salt-item>
-        <salt-item text="离线数据" icon-painter="qr-code"></salt-item>
-        <salt-item text="Salt UI 演示" icon-painter="qr-code" @click="router.push('/tabs/mine/salt-demo')">
-          <template #icon>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 512 512"
-              fill="currentColor">
-              <path d="M256 144.03l-55.49-96.11h-79.43L256 281.61 390.92 47.92h-79.43L256 144.03z"></path>
-              <path d="M409.4 47.92L256 313.61 102.6 47.92H15.74L256 464.08 496.26 47.92H409.4z"></path>
-            </svg>
-          </template>
+        <salt-item text="订单集合">
+          <template #icon><icon-order class="icon" /></template>
+        </salt-item>
+      </salt-rounded-column>
+      <salt-rounded-column title="离线资源">
+        <salt-item text="离线地图">
+          <template #icon><icon-localtion class="icon" /></template>
+        </salt-item>
+        <salt-item text="离线数据">
+          <template #icon><icon-database class="icon" /></template>
+        </salt-item>
+      </salt-rounded-column>
+      <salt-rounded-column>
+        <salt-item text="Salt UI" @click="router.push('/tabs/mine/salt-demo')">
+          <template #icon><icon-demo class="icon" /></template>
+        </salt-item>
+      </salt-rounded-column>
+      <salt-rounded-column>
+        <salt-item text="关于" @click="router.push('/tabs/mine/about')">
+          <template #icon><icon-info-circle class="icon" /></template>
         </salt-item>
       </salt-rounded-column>
     </ion-content>
@@ -20,20 +30,36 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { IonPage, IonContent } from '@ionic/vue';
+import { IonPage, IonContent, onIonViewWillLeave } from '@ionic/vue';
 import {
   SaltItem,
   SaltRoundedColumn,
 } from '@snewbie/salt-ui-vue'
+import IconLocaltion from '@/icons/location.svg'
+import IconDatabase from '@/icons/database.svg'
+import IconInfoCircle from '@/icons/info-circle.svg'
+import IconDemo from '@/icons/demo.svg'
+import IconOrder from '@/icons/order.svg'
+
+// 优先使用 Ant Design 官方图标库（https://www.iconfont.cn/collections/detail?spm=a313x.collections_index.i1.d9df05512.572c3a81Gscmd3&cid=9402）
 
 const router = useRouter()
 
+onIonViewWillLeave(() => {
+  window.SaltUI.clearAllRippleAnimate()
+})
 </script>
 
 <style scoped>
 .icon {
-  font-size: 24px;
-  color: var(--salt-color-highlight);
+  --icon-size: 24px;
+  --icon-color: var(--salt-color-text);
+
+  font-size: var(--icon-size);
+  color: var(--icon-color);
+  fill: var(--icon-color);
   align-self: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
 }
 </style>
