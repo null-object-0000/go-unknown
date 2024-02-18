@@ -1,6 +1,14 @@
 <template>
   <ion-page>
+    <ion-header class="ion-no-border">
+      <salt-title-bar :show-back-btn="false" />
+    </ion-header>
     <ion-content :fullscreen="true">
+      <salt-rounded-column>
+        <salt-item text="账号绑定" @click="router.push('/tabs/mine/account-bind')">
+          <template #icon><icon-account-bind class="icon" /></template>
+        </salt-item>
+      </salt-rounded-column>
       <salt-rounded-column>
         <salt-item text="订单集合">
           <template #icon><icon-order class="icon" /></template>
@@ -30,16 +38,18 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { IonPage, IonContent, onIonViewWillLeave } from '@ionic/vue';
+import { IonPage, IonContent, IonHeader, onIonViewWillLeave } from '@ionic/vue';
 import {
   SaltItem,
   SaltRoundedColumn,
+  SaltTitleBar
 } from '@snewbie/salt-ui-vue'
 import IconLocaltion from '@/icons/location.svg'
 import IconDatabase from '@/icons/database.svg'
 import IconInfoCircle from '@/icons/info-circle.svg'
 import IconDemo from '@/icons/demo.svg'
 import IconOrder from '@/icons/order.svg'
+import IconAccountBind from '@/icons/account-bind.svg'
 
 // 优先使用 Ant Design 官方图标库（https://www.iconfont.cn/collections/detail?spm=a313x.collections_index.i1.d9df05512.572c3a81Gscmd3&cid=9402）
 

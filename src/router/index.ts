@@ -29,6 +29,10 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
+        path: 'mine/account-bind',
+        component: () => import('@/views/mine/AccountBindPage.vue')
+      },
+      {
         path: 'mine/salt-demo',
         component: () => import('@/views/mine/SaltDemoPage.vue')
       },

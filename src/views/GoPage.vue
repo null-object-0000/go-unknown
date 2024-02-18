@@ -1,9 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>出发</ion-title>
-      </ion-toolbar>
+    <ion-header class="ion-no-border">
+      <salt-title-bar :show-back-btn="false" />
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
@@ -19,5 +17,8 @@
 
 <script setup lang="ts">
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue';
+import {
+  SaltTitleBar
+} from '@snewbie/salt-ui-vue'
 import ExploreContainer from '@/components/ExploreContainer.vue';
 </script>
