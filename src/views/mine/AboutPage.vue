@@ -13,8 +13,8 @@
 
             <salt-rounded-column>
                 <salt-yes-no-dialog v-model:open="model.changeLogDialog.open" title="访问链接"
-                    :content="model.changeLogDialog.url" cancel-text="取消" confirm-text="确定"
-                    @confirm="jump2(model.changeLogDialog.url)"></salt-yes-no-dialog>
+                    :content="model.changeLogDialog.url" cancel-text="取消" confirm-text="确定" @open="statusBar.onDialogOpen"
+                    @close="statusBar.onDialogClose" @confirm="jump2(model.changeLogDialog.url)"></salt-yes-no-dialog>
                 <salt-item text="更新日志" @click="model.changeLogDialog.open = true"></salt-item>
             </salt-rounded-column>
         </ion-content>
@@ -27,6 +27,7 @@ import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonContent, IonImg } from '@ionic/vue';
 import { SaltTitleBar, SaltItemOuterLargeTitle, SaltRoundedColumn, SaltYesNoDialog, SaltItem } from '@snewbie/salt-ui-vue'
 import { Browser } from '@capacitor/browser';
+import { useStatusBar } from '@/hooks'
 
 const appInfo = {
     name: __APP_NAME__,
@@ -42,6 +43,7 @@ const model = reactive({
 });
 
 const router = useRouter()
+const statusBar = useStatusBar()
 
 const onBack = () => {
     router.push('/tabs/mine')
