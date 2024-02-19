@@ -33,6 +33,10 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/mine/AccountBindPage.vue')
       },
       {
+        path: 'mine/settings',
+        component: () => import('@/views/mine/SettingsPage.vue')
+      },
+      {
         path: 'mine/salt-demo',
         component: () => import('@/views/mine/SaltDemoPage.vue')
       },

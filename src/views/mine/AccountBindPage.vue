@@ -187,6 +187,7 @@ const initWebView = async (handler: { url: string, checker: () => Promise<boolea
 
 
 onIonViewWillLeave(async () => {
+    window.SaltUI.clearAllRippleAnimate()
     webView?.destroy()
 })
 </script>

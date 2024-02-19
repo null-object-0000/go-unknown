@@ -19,4 +19,16 @@ onBeforeMount(async () => {
 ion-content {
   --background: var(--salt-color-background)
 }
+
+.salt-icon {
+  --icon-size: 24px;
+  --icon-color: var(--salt-color-text);
+
+  font-size: var(--icon-size);
+  color: var(--icon-color);
+  fill: var(--icon-color);
+  align-self: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
 </style>

@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <salt-title-bar :show-back-btn="false" />
+      <salt-title-bar text="出发" :show-back-btn="false" />
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">

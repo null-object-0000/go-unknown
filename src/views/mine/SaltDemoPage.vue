@@ -105,7 +105,7 @@ const model = reactive({
 const router = useRouter()
 
 const onBack = () => {
-    router.push('/tabs/mine')
+    router.push('/tabs/mine/about')
 };
 </script>
 

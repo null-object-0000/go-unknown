@@ -4,7 +4,7 @@
             <salt-title-bar text="关于" @back="onBack" />
         </ion-header>
         <ion-content :fullscreen="true">
-            <ion-img class="logo" src="/favicon.png" alt="App Logo"></ion-img>
+            <ion-img class="logo" src="/favicon.png" alt="App Logo" />
 
             <salt-item-outer-large-title>
                 <template #text>{{ appInfo.name }}<sup class="version">{{ appInfo.version }}</sup></template>
@@ -14,8 +14,15 @@
             <salt-rounded-column>
                 <salt-yes-no-dialog v-model:open="model.changeLogDialog.open" title="访问链接"
                     :content="model.changeLogDialog.url" cancel-text="取消" confirm-text="确定" @open="statusBar.onDialogOpen"
-                    @close="statusBar.onDialogClose" @confirm="jump2(model.changeLogDialog.url)"></salt-yes-no-dialog>
-                <salt-item text="更新日志" @click="model.changeLogDialog.open = true"></salt-item>
+                    @close="statusBar.onDialogClose" @confirm="jump2(model.changeLogDialog.url)" />
+                <salt-item text="更新日志" @click="model.changeLogDialog.open = true">
+                    <template #icon><icon-changelog class="salt-icon" /></template>
+                </salt-item>
+            </salt-rounded-column>
+            <salt-rounded-column>
+                <salt-item text="Salt UI" @click="router.push('/tabs/mine/salt-demo')">
+                    <template #icon><icon-demo class="salt-icon" /></template>
+                </salt-item>
             </salt-rounded-column>
         </ion-content>
     </ion-page>
@@ -24,8 +31,12 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonContent, IonImg } from '@ionic/vue';
+import { IonPage, IonHeader, IonContent, IonImg, onIonViewWillLeave } from '@ionic/vue';
 import { SaltTitleBar, SaltItemOuterLargeTitle, SaltRoundedColumn, SaltYesNoDialog, SaltItem } from '@snewbie/salt-ui-vue'
+import {
+    IconChangelog,
+    IconDemo,
+} from '@/icons'
 import { Browser } from '@capacitor/browser';
 import { useStatusBar } from '@/hooks'
 
@@ -52,12 +63,15 @@ const onBack = () => {
 const jump2 = async (url: string) => {
     await Browser.open({ url });
 };
+
+onIonViewWillLeave(() => {
+    window.SaltUI.clearAllRippleAnimate()
+})
 </script>
 
 <style scoped>
 .logo {
-    width: 50px;
-    height: 50px;
+    width: 70px;
     margin: 0 auto;
     display: block;
     padding-top: calc(var(--salt-dimen-content-padding) * 1.5);
