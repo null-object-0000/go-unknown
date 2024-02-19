@@ -46,7 +46,11 @@ const handlers = {
         checker: async () => {
             const cookie2 = await WebView.getCookie('https://m.damai.cn', 'cookie2')
             const dm_nickname = await WebView.getCookie('https://m.damai.cn', 'dm_nickname')
-            if (cookie2) {
+
+            log('getCookie', cookie2)
+
+            if (cookie2 && cookie2.length > 0 &&
+                dm_nickname && dm_nickname.length > 0) {
                 model.state.daMai.effective = true
                 model.state.daMai.userName = dm_nickname
                 model.state.daMai.value = cookie2
@@ -67,7 +71,8 @@ const handlers = {
 
             log('getCookie', cookie)
 
-            if (token) {
+            if (token && token.length > 0 &&
+                userName && userName.length > 0) {
                 model.state.tcTravel.effective = true
                 model.state.tcTravel.userName = userName || ''
                 model.state.tcTravel.value = token
@@ -80,13 +85,13 @@ const handlers = {
     ctripTravel: {
         url: 'https://accounts.ctrip.com/h5Login/login_dynamicpwd?sibling=T',
         checker: async () => {
-            const cookie = await WebView.getCookie('https://m.ctrip.com', 'cticket')
+            const cticket = await WebView.getCookie('https://m.ctrip.com', 'cticket')
 
-            log('getCookie', cookie)
+            log('getCookie', cticket)
 
-            if (cookie) {
+            if (cticket && cticket.length > 0) {
                 model.state.ctripTravel.effective = true
-                model.state.ctripTravel.value = cookie
+                model.state.ctripTravel.value = cticket
                 return true
             } else {
                 return false
