@@ -29,6 +29,10 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       {
+        path: 'mine/personal-profile',
+        component: () => import('@/views/mine/PersonalProfilePage.vue')
+      },
+      {
         path: 'mine/account-bind',
         component: () => import('@/views/mine/AccountBindPage.vue')
       },

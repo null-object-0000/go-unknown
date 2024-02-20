@@ -5,6 +5,9 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <salt-rounded-column>
+        <salt-item text="个人资料" @click="router.push('/tabs/mine/personal-profile')">
+          <template #icon><icon-id-card class="salt-icon" /></template>
+        </salt-item>
         <salt-item text="账号绑定" @click="router.push('/tabs/mine/account-bind')">
           <template #icon><icon-account-bind class="salt-icon" /></template>
         </salt-item>
@@ -48,6 +51,7 @@ import {
   SaltTitleBar
 } from '@snewbie/salt-ui-vue'
 import {
+  IconIdCard,
   IconLocaltion,
   IconDatabase,
   IconInfoCircle,

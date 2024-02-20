@@ -13,33 +13,34 @@
                 </salt-item>
             </salt-rounded-column>
             <salt-rounded-column title="高德地图 Web 服务 Key">
-                <salt-item-edit v-model="model.amapWebApiKey" @change="onAmapWebApikeyEditChange" />
+                <salt-item-edit v-model="amapWebApiKey" />
             </salt-rounded-column>
         </ion-content>
     </ion-page>
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, reactive } from 'vue';
+import { onBeforeMount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonContent, onIonViewWillLeave } from '@ionic/vue';
 import { SaltTitleBar, SaltRoundedColumn, SaltItem, SaltItemEdit, SaltYesNoDialog } from '@snewbie/salt-ui-vue'
 import { IconClear } from '@/icons'
-import { Preferences } from '@capacitor/preferences';
 import { WebView } from '@snewbie/capacitor-web-view';
-import { useStatusBar } from '@/hooks'
+import { isNotHybrid, usePreferences, useStatusBar } from '@/hooks'
 
 const model = reactive({
     hasCache: false,
     clearCacheDialog: false,
-    amapWebApiKey: '',
 });
+
 const router = useRouter()
+const preferences = usePreferences()
 const statusBar = useStatusBar()
 
+const amapWebApiKey = ref<string | null>(null);
+
 onBeforeMount(async () => {
-    const { value } = await Preferences.get({ key: 'Mine.Settings.AmapWebApiKey' })
-    model.amapWebApiKey = value || ''
+    await preferences.watch('Mine.Settings.AmapWebApiKey', amapWebApiKey)
 
     model.hasCache = await checkHasCache()
 })
@@ -49,19 +50,14 @@ const onBack = () => {
 };
 
 const checkHasCache = async () => {
-    const hasCookies = await WebView.hasCookies()
-    return hasCookies
+    if (isNotHybrid) return false
+    return await WebView.hasCookies()
 }
 
 const clearAllCache = async () => {
     await WebView.removeAllCookies()
 
     model.hasCache = await checkHasCache()
-}
-
-const onAmapWebApikeyEditChange = async () => {
-    const newValue = model.amapWebApiKey
-    await Preferences.set({ key: 'Mine.Settings.AmapWebApiKey', value: newValue })
 }
 
 onIonViewWillLeave(() => {

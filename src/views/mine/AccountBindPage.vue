@@ -6,6 +6,9 @@
             </ion-header>
             <ion-content :fullscreen="true">
                 <salt-rounded-column>
+                    <salt-yes-no-dialog v-model:open="model.unbindDialog.open" title="要账号解绑吗？" cancel-text="取消"
+                        confirm-text="确定" @open="statusBar.onDialogOpen" @close="statusBar.onDialogClose"
+                        @confirm="unbind(model.unbindDialog.key)" />
                     <salt-item-switcher v-model="model.state.daMai.effective" text="大麦"
                         :sub="model.state.daMai.effective ? model.state.daMai.userName : '尚未绑定'"
                         @change="(value, _event) => change('daMai', value)" />
@@ -15,9 +18,9 @@
                     <salt-item-switcher v-model="model.state.ctripTravel.effective" text="携程旅行"
                         :sub="model.state.ctripTravel.effective ? model.state.ctripTravel.userName : '尚未绑定'"
                         @change="(value, _event) => change('ctripTravel', value)" />
-                    <salt-item-switcher text="铁路12306" sub="尚未绑定" />
-                    <salt-item-switcher text="江苏ETC" sub="尚未绑定" />
-                    <salt-item-switcher text="易捷加油" sub="尚未绑定" />
+                    <salt-item-switcher text="铁路12306" sub="暂不支持" :enabled="false" />
+                    <salt-item-switcher text="江苏ETC" sub="暂不支持" :enabled="false" />
+                    <salt-item-switcher text="易捷加油" sub="暂不支持" :enabled="false" />
                 </salt-rounded-column>
             </ion-content>
         </template>
@@ -34,11 +37,22 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, reactive, ref } from 'vue';
+import { nextTick, onBeforeMount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonContent, IonProgressBar, onIonViewWillLeave } from '@ionic/vue';
-import { SaltTitleBar, SaltRoundedColumn, SaltItemSwitcher } from '@snewbie/salt-ui-vue'
+import { SaltTitleBar, SaltRoundedColumn, SaltItemSwitcher, SaltYesNoDialog } from '@snewbie/salt-ui-vue'
 import { WebView } from '@snewbie/capacitor-web-view';
+import { isNotHybrid, usePreferences, useStatusBar } from '@/hooks'
+
+interface State { effective: boolean; userName: string; value: string }
+
+const router = useRouter()
+const preferences = usePreferences()
+const statusBar = useStatusBar()
+
+const daMai = ref<State | null>(null);
+const tcTravel = ref<State | null>(null);
+const ctripTravel = ref<State | null>(null);
 
 const handlers = {
     daMai: {
@@ -54,6 +68,8 @@ const handlers = {
                 model.state.daMai.effective = true
                 model.state.daMai.userName = dm_nickname
                 model.state.daMai.value = cookie2
+
+                daMai.value = model.state.daMai
                 return true
             } else {
                 return false
@@ -76,6 +92,8 @@ const handlers = {
                 model.state.tcTravel.effective = true
                 model.state.tcTravel.userName = userName || ''
                 model.state.tcTravel.value = token
+
+                tcTravel.value = model.state.tcTravel
                 return true
             } else {
                 return false
@@ -83,15 +101,22 @@ const handlers = {
         }
     },
     ctripTravel: {
-        url: 'https://accounts.ctrip.com/h5Login/login_dynamicpwd?sibling=T',
+        url: 'https://m.ctrip.com/webapp/myctrip',
         checker: async () => {
+            const userNameDom = '#main > div > div.rn-scroller-vert.rn-view > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div.rn-text'
+
             const cticket = await WebView.getCookie('https://m.ctrip.com', 'cticket')
+            const userName = JSON.parse(await webView.evaluateJavascript(`document.querySelector("${userNameDom}")?.textContent`) || 'null')
 
             log('getCookie', cticket)
 
-            if (cticket && cticket.length > 0) {
+            if (cticket && cticket.length > 0 &&
+                userName && userName.length > 0 && userName !== 'null') {
                 model.state.ctripTravel.effective = true
+                model.state.ctripTravel.userName = userName
                 model.state.ctripTravel.value = cticket
+
+                ctripTravel.value = model.state.ctripTravel
                 return true
             } else {
                 return false
@@ -102,6 +127,7 @@ const handlers = {
 
 const model = reactive({
     mode: 'default' as 'default' | 'web-view',
+    unbindDialog: { open: false, key: '' },
     state: {
         daMai: {
             effective: false,
@@ -118,16 +144,30 @@ const model = reactive({
             userName: '',
             value: ''
         }
-    } as { [key: string]: { effective: boolean; userName: string; value: string } }
+    } as { [key: string]: State }
 })
 
-const router = useRouter()
+onBeforeMount(async () => {
+    await preferences.objectWatch('Mine.AccountBind.daMai', daMai)
+    await preferences.objectWatch('Mine.AccountBind.tcTravel', tcTravel)
+    await preferences.objectWatch('Mine.AccountBind.ctripTravel', ctripTravel)
 
-const onBack = () => {
-    router.push('/tabs/mine')
-};
+    model.state.daMai = daMai.value || model.state.daMai
+    model.state.tcTravel = tcTravel.value || model.state.tcTravel
+    model.state.ctripTravel = ctripTravel.value || model.state.ctripTravel
+})
+
+const onBack = () => router.push('/tabs/mine');
+
+const checkTask = ref<NodeJS.Timeout>()
 
 const change = async (key: string, state: boolean) => {
+    if (isNotHybrid) {
+        alert('请在 App 中进行操作') // TODO: replace with a toast
+        setTimeout(() => model.state[key].effective = false, 250)
+        return
+    }
+
     const handler = handlers[key]
 
     if (state) {
@@ -136,11 +176,12 @@ const change = async (key: string, state: boolean) => {
         await nextTick()
         await initWebView(handler)
 
-        const checkTask = setInterval(() => {
+        checkTask.value ?? clearInterval(checkTask.value)
+        checkTask.value = setInterval(() => {
             handler.checker().then(async (result: boolean) => {
                 if (!result) return;
 
-                clearInterval(checkTask)
+                clearInterval(checkTask.value)
                 await webView.hide()
                 webView.disableTouch()
                 webView.destroy()
@@ -148,9 +189,22 @@ const change = async (key: string, state: boolean) => {
             })
         }, 1500)
     } else {
-        model.state[key].effective = false
-        model.state[key].userName = ''
-        model.state[key].value = ''
+        model.state[key].effective = true
+        model.unbindDialog = { open: true, key }
+    }
+}
+
+const unbind = (key: string) => {
+    model.state[key].effective = false
+    model.state[key].userName = ''
+    model.state[key].value = ''
+
+    if (key === 'daMai') {
+        daMai.value = null
+    } else if (key === 'tcTravel') {
+        tcTravel.value = null
+    } else if (key === 'ctripTravel') {
+        ctripTravel.value = null
     }
 }
 
@@ -193,6 +247,7 @@ const initWebView = async (handler: { url: string, checker: () => Promise<boolea
 
 onIonViewWillLeave(async () => {
     window.SaltUI.clearAllRippleAnimate()
+    checkTask.value ?? clearInterval(checkTask.value)
     webView?.destroy()
 })
 </script>

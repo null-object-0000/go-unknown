@@ -8,6 +8,7 @@ import IconCloudSync from '@/icons/cloud-sync.svg'
 import IconClear from '@/icons/clear.svg'
 import IconSetting from '@/icons/setting.svg'
 import IconChangelog from '@/icons/changelog.svg'
+import IconIdCard from '@/icons/id-card.svg'
 
 export {
     IconLocaltion,
@@ -19,5 +20,6 @@ export {
     IconCloudSync,
     IconClear,
     IconSetting,
-    IconChangelog
+    IconChangelog,
+    IconIdCard
 }

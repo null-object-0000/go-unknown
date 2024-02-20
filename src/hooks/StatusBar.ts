@@ -1,6 +1,6 @@
 import { StatusBar, Style } from '@capacitor/status-bar';
-import { isPlatform } from '@ionic/vue';
 import { ref } from 'vue';
+import { isNotHybrid } from '@/hooks'
 
 export default function useStatusBar() {
     // 注意这里的色值没有走 css 变量，所以需要手动设置
@@ -17,9 +17,6 @@ export default function useStatusBar() {
 
     const scene = ref<'default' | 'dialog'>('default');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const isHybrid = isPlatform('hybrid');
-    const isNotHybrid = !isHybrid;
 
     /**
      * 切换状态栏主题
