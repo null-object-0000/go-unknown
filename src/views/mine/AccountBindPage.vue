@@ -18,7 +18,9 @@
                     <salt-item-switcher v-model="model.state.ctripTravel.effective" text="携程旅行"
                         :sub="model.state.ctripTravel.effective ? model.state.ctripTravel.userName : '尚未绑定'"
                         @change="(value, _event) => change('ctripTravel', value)" />
-                    <salt-item-switcher text="铁路12306" sub="暂不支持" :enabled="false" />
+                    <salt-item-switcher v-model="model.state.govTrain12306.effective" text="铁路12306"
+                        :sub="model.state.govTrain12306.effective ? model.state.govTrain12306.userName : '尚未绑定'"
+                        @change="(value, _event) => change('govTrain12306', value)" />
                     <salt-item-switcher text="江苏ETC" sub="暂不支持" :enabled="false" />
                     <salt-item-switcher text="易捷加油" sub="暂不支持" :enabled="false" />
                 </salt-rounded-column>
@@ -53,6 +55,7 @@ const statusBar = useStatusBar()
 const daMai = ref<State | null>(null);
 const tcTravel = ref<State | null>(null);
 const ctripTravel = ref<State | null>(null);
+const govTrain12306 = ref<State | null>(null);
 
 const handlers = {
     daMai: {
@@ -82,7 +85,7 @@ const handlers = {
             const cookie = await WebView.getCookie('https://m.ly.com', 'cnUser')
 
             const keyValues = cookie.split('&').map(item => item.split('='))
-            const userName = keyValues.find(([key]) => key === 'nickName')?.[1]
+            const userName = keyValues.find(([key]) => key === 'nickName')?.[1]?.replace('+', ' ')
             const token = keyValues.find(([key]) => key === 'token')?.[1]
 
             log('getCookie', cookie)
@@ -90,7 +93,7 @@ const handlers = {
             if (token && token.length > 0 &&
                 userName && userName.length > 0) {
                 model.state.tcTravel.effective = true
-                model.state.tcTravel.userName = userName || ''
+                model.state.tcTravel.userName = decodeURIComponent(userName)
                 model.state.tcTravel.value = token
 
                 tcTravel.value = model.state.tcTravel
@@ -123,7 +126,36 @@ const handlers = {
             }
         }
     },
-} as { [key: string]: { url: string; checker: () => Promise<boolean> } }
+    govTrain12306: {
+        url: 'https://kyfw.12306.cn/otn/view/index.html',
+        onLoad: async () => {
+            await webView.evaluateJavascript(`document.querySelector('.login-box').scrollIntoView()`)
+        },
+        checker: async () => {
+            const userNameDom = '#js-minHeight > div.welcome_data > div.welcome-tit > strong'
+
+            const govTrain12306TK = await WebView.getCookie("https://kyfw.12306.cn", 'uKey')
+            const govTrain12306UKey = await WebView.getCookie("https://kyfw.12306.cn/otn", 'tk')
+            const cookie = govTrain12306TK && govTrain12306TK.length > 0 && govTrain12306UKey && govTrain12306UKey.length > 0
+                ? JSON.stringify({ govTrain12306TK, govTrain12306UKey }) : undefined
+            const userName = JSON.parse(await webView.evaluateJavascript(`document.querySelector("${userNameDom}")?.textContent`) || 'null')
+
+            log('getCookie', govTrain12306TK + ' ' + govTrain12306UKey + ' ' + userName)
+
+            if (cookie && cookie.length > 0 &&
+                userName && userName.length > 0 && userName !== 'null') {
+                model.state.govTrain12306.effective = true
+                model.state.govTrain12306.userName = userName
+                model.state.govTrain12306.value = cookie
+
+                govTrain12306.value = model.state.govTrain12306
+                return true
+            } else {
+                return false
+            }
+        }
+    },
+} as { [key: string]: { url: string; onLoad?: () => Promise<void>; checker: () => Promise<boolean> } }
 
 const model = reactive({
     mode: 'default' as 'default' | 'web-view',
@@ -143,18 +175,25 @@ const model = reactive({
             effective: false,
             userName: '',
             value: ''
-        }
+        },
+        govTrain12306: {
+            effective: false,
+            userName: '',
+            value: ''
+        },
     } as { [key: string]: State }
 })
 
 onBeforeMount(async () => {
-    await preferences.objectWatch('Mine.AccountBind.daMai', daMai)
-    await preferences.objectWatch('Mine.AccountBind.tcTravel', tcTravel)
-    await preferences.objectWatch('Mine.AccountBind.ctripTravel', ctripTravel)
+    await preferences.objectWatch('Mine.AccountBind.DaMai', daMai)
+    await preferences.objectWatch('Mine.AccountBind.TcTravel', tcTravel)
+    await preferences.objectWatch('Mine.AccountBind.CtripTravel', ctripTravel)
+    await preferences.objectWatch('Mine.AccountBind.GovTrain12306', govTrain12306)
 
     model.state.daMai = daMai.value || model.state.daMai
     model.state.tcTravel = tcTravel.value || model.state.tcTravel
     model.state.ctripTravel = ctripTravel.value || model.state.ctripTravel
+    model.state.govTrain12306 = govTrain12306.value || model.state.govTrain12306
 })
 
 const onBack = () => router.push('/tabs/mine');
@@ -176,8 +215,17 @@ const change = async (key: string, state: boolean) => {
         await nextTick()
         await initWebView(handler)
 
+        let onloadExecuted = false
         checkTask.value ?? clearInterval(checkTask.value)
         checkTask.value = setInterval(() => {
+            if (!onloadExecuted) {
+                if (typeof handler.onLoad === 'function') {
+                    handler.onLoad()
+                }
+
+                onloadExecuted = true
+            }
+
             handler.checker().then(async (result: boolean) => {
                 if (!result) return;
 
@@ -205,6 +253,8 @@ const unbind = (key: string) => {
         tcTravel.value = null
     } else if (key === 'ctripTravel') {
         ctripTravel.value = null
+    } else if (key === 'govTrain12306') {
+        govTrain12306.value = null
     }
 }
 
