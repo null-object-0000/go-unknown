@@ -1,5 +1,5 @@
-import usePreferences from '@/hooks/Preferences'
-import useStatusBar from '@/hooks/StatusBar'
+import usePreferences from '@/composables/Preferences'
+import useStatusBar from '@/composables/StatusBar'
 import { isPlatform } from '@ionic/vue';
 
 const isHybrid = isPlatform('hybrid');

@@ -26,7 +26,7 @@ import { IonPage, IonHeader, IonContent, onIonViewWillLeave } from '@ionic/vue';
 import { SaltTitleBar, SaltRoundedColumn, SaltItem, SaltItemEdit, SaltYesNoDialog } from '@snewbie/salt-ui-vue'
 import { IconClear } from '@/icons'
 import { WebView } from '@snewbie/capacitor-web-view';
-import { isNotHybrid, usePreferences, useStatusBar } from '@/hooks'
+import { isNotHybrid, usePreferences, useStatusBar } from '@/composables'
 
 const model = reactive({
     hasCache: false,
@@ -65,4 +65,4 @@ onIonViewWillLeave(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped></style>@/composables

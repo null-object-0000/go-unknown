@@ -1,6 +1,6 @@
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { ref } from 'vue';
-import { isNotHybrid } from '@/hooks'
+import { isNotHybrid } from '@/composables'
 
 export default function useStatusBar() {
     // 注意这里的色值没有走 css 变量，所以需要手动设置

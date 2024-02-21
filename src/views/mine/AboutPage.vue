@@ -38,7 +38,7 @@ import {
     IconDemo,
 } from '@/icons'
 import { Browser } from '@capacitor/browser';
-import { useStatusBar } from '@/hooks'
+import { useStatusBar } from '@/composables'
 
 const appInfo = {
     name: __APP_NAME__,
@@ -92,4 +92,4 @@ onIonViewWillLeave(() => {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-</style>
+</style>@/composables

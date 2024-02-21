@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import { onBeforeMount } from 'vue';
-import { useStatusBar } from '@/hooks'
+import { useStatusBar } from '@/composables'
 
 onBeforeMount(async () => {
   const statusBar = useStatusBar()
@@ -32,3 +32,4 @@ ion-content {
   height: var(--icon-size);
 }
 </style>
+@/composables

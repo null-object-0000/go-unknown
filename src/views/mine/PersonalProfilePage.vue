@@ -15,7 +15,7 @@
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonContent, onIonViewWillLeave } from '@ionic/vue';
 import { SaltTitleBar, SaltRoundedColumn, SaltItemEdit } from '@snewbie/salt-ui-vue'
-import { usePreferences } from '@/hooks'
+import { usePreferences } from '@/composables'
 import { onBeforeMount, ref } from 'vue';
 
 const router = useRouter()
@@ -36,4 +36,4 @@ onIonViewWillLeave(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped></style>@/composables

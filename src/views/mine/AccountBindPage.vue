@@ -21,7 +21,12 @@
                     <salt-item-switcher v-model="model.state.govTrain12306.effective" text="铁路12306"
                         :sub="model.state.govTrain12306.effective ? model.state.govTrain12306.userName : '尚未绑定'"
                         @change="(value, _event) => change('govTrain12306', value)" />
-                    <salt-item-switcher text="江苏ETC" sub="暂不支持" :enabled="false" />
+                    <salt-input-dialog v-model="model.jiangSuEtcDialog.input" v-model:open="model.jiangSuEtcDialog.open"
+                        title="X-APP-TOKEN" @open="statusBar.onDialogOpen" @close="statusBar.onDialogClose"
+                        @confirm="handlers.jiangSuEtc.checker" />
+                    <salt-item-switcher v-model="model.state.jiangSuEtc.effective" text="江苏ETC"
+                        :sub="model.state.jiangSuEtc.effective ? model.state.jiangSuEtc.userName : '尚未绑定'"
+                        @change="jiangSuEtcChange" />
                     <salt-item-switcher text="易捷加油" sub="暂不支持" :enabled="false" />
                 </salt-rounded-column>
             </ion-content>
@@ -42,9 +47,10 @@
 import { nextTick, onBeforeMount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonContent, IonProgressBar, onIonViewWillLeave } from '@ionic/vue';
-import { SaltTitleBar, SaltRoundedColumn, SaltItemSwitcher, SaltYesNoDialog } from '@snewbie/salt-ui-vue'
+import { SaltTitleBar, SaltRoundedColumn, SaltItemSwitcher, SaltYesNoDialog, SaltInputDialog } from '@snewbie/salt-ui-vue'
 import { WebView } from '@snewbie/capacitor-web-view';
-import { isNotHybrid, usePreferences, useStatusBar } from '@/hooks'
+import { isNotHybrid, usePreferences, useStatusBar } from '@/composables'
+import { CapacitorHttp } from '@capacitor/core';
 
 interface State { effective: boolean; userName: string; value: string }
 
@@ -56,6 +62,7 @@ const daMai = ref<State | null>(null);
 const tcTravel = ref<State | null>(null);
 const ctripTravel = ref<State | null>(null);
 const govTrain12306 = ref<State | null>(null);
+const jiangSuEtc = ref<State | null>(null);
 
 const handlers = {
     daMai: {
@@ -155,11 +162,50 @@ const handlers = {
             }
         }
     },
+    jiangSuEtc: {
+        url: 'https://etctoll.etczs.net',
+        checker: async () => {
+            const token = model.jiangSuEtcDialog.input
+
+            if (token && token.length > 0) {
+                model.state.jiangSuEtc.effective = true
+                model.state.jiangSuEtc.value = token
+
+                const response = await CapacitorHttp.post({
+                    url: "https://etctoll.etczs.net/etctollsapi/tolls/truck/bill/carlist",
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Referer': 'https://servicewechat.com/wxb17f5d5d01db8949/1317/page-frame.html',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36 MicroMessenger/7.0.20.1781 NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF XWEB/10448',
+                        'xweb_xhr': '1',
+                        'X-APP-ID': '1',
+                        'X-APP-VER': '6.4.240114',
+                        'X-APP-TOKEN': token
+                    }
+                })
+
+                const { data } = response.data as { data: { plateNo: string }[] }
+
+                const userName = data && data.length > 0 ? data[0].plateNo : null
+                if (!userName || userName.length === 0) {
+                    alert('X-APP-TOKEN 无效，请重新输入') // TODO: replace with a toast
+                    return false
+                }
+
+                model.state.jiangSuEtc.userName = userName
+                jiangSuEtc.value = model.state.jiangSuEtc
+                return true
+            } else {
+                return false
+            }
+        }
+    },
 } as { [key: string]: { url: string; onLoad?: () => Promise<void>; checker: () => Promise<boolean> } }
 
 const model = reactive({
     mode: 'default' as 'default' | 'web-view',
     unbindDialog: { open: false, key: '' },
+    jiangSuEtcDialog: { open: false, input: '' },
     state: {
         daMai: {
             effective: false,
@@ -181,6 +227,11 @@ const model = reactive({
             userName: '',
             value: ''
         },
+        jiangSuEtc: {
+            effective: false,
+            userName: '',
+            value: ''
+        }
     } as { [key: string]: State }
 })
 
@@ -189,11 +240,13 @@ onBeforeMount(async () => {
     await preferences.objectWatch('Mine.AccountBind.TcTravel', tcTravel)
     await preferences.objectWatch('Mine.AccountBind.CtripTravel', ctripTravel)
     await preferences.objectWatch('Mine.AccountBind.GovTrain12306', govTrain12306)
+    await preferences.objectWatch('Mine.AccountBind.JiangSuEtc', jiangSuEtc)
 
     model.state.daMai = daMai.value || model.state.daMai
     model.state.tcTravel = tcTravel.value || model.state.tcTravel
     model.state.ctripTravel = ctripTravel.value || model.state.ctripTravel
     model.state.govTrain12306 = govTrain12306.value || model.state.govTrain12306
+    model.state.jiangSuEtc = jiangSuEtc.value || model.state.jiangSuEtc
 })
 
 const onBack = () => router.push('/tabs/mine');
@@ -218,7 +271,7 @@ const change = async (key: string, state: boolean) => {
         let onloadExecuted = false
         checkTask.value ?? clearInterval(checkTask.value)
         checkTask.value = setInterval(() => {
-            if (!onloadExecuted) {
+            if (!onloadExecuted && progress.value == 100) {
                 if (typeof handler.onLoad === 'function') {
                     handler.onLoad()
                 }
@@ -242,6 +295,18 @@ const change = async (key: string, state: boolean) => {
     }
 }
 
+const jiangSuEtcChange = async () => {
+    await nextTick()
+    if (model.state.jiangSuEtc.effective) {
+        model.state.jiangSuEtc.effective = false
+        model.jiangSuEtcDialog.open = true
+    } else {
+        model.state.jiangSuEtc.effective = true
+        model.unbindDialog = { open: true, key: 'jiangSuEtc' }
+
+    }
+}
+
 const unbind = (key: string) => {
     model.state[key].effective = false
     model.state[key].userName = ''
@@ -255,6 +320,8 @@ const unbind = (key: string) => {
         ctripTravel.value = null
     } else if (key === 'govTrain12306') {
         govTrain12306.value = null
+    } else if (key === 'jiangSuEtc') {
+        jiangSuEtc.value = null
     }
 }
 
@@ -302,4 +369,4 @@ onIonViewWillLeave(async () => {
 })
 </script>
 
-<style scoped></style>
+<style scoped></style>@/composables
