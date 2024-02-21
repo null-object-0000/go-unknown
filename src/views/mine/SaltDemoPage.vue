@@ -79,8 +79,7 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue';
-import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonContent } from '@ionic/vue';
+import { IonPage, IonHeader, IonContent, useIonRouter } from '@ionic/vue';
 import {
     SaltTitleBar,
     SaltTextButton,
@@ -102,10 +101,14 @@ const model = reactive({
     slider: 0,
 });
 
-const router = useRouter()
+const router = useIonRouter()
 
 const onBack = () => {
-    router.push('/tabs/mine/about')
+    if (router.canGoBack()) {
+        router.back()
+    } else {
+        router.push('/tabs/mine/about')
+    }
 };
 </script>
 

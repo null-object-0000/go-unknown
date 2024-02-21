@@ -37,6 +37,10 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/mine/AccountBindPage.vue')
       },
       {
+        path: 'mine/order-collection',
+        component: () => import('@/views/mine/OrderCollectionPage.vue')
+      },
+      {
         path: 'mine/settings',
         component: () => import('@/views/mine/SettingsPage.vue')
       },

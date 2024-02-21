@@ -16,12 +16,12 @@
                     :content="model.changeLogDialog.url" cancel-text="取消" confirm-text="确定" @open="statusBar.onDialogOpen"
                     @close="statusBar.onDialogClose" @confirm="jump2(model.changeLogDialog.url)" />
                 <salt-item text="更新日志" @click="model.changeLogDialog.open = true">
-                    <template #icon><icon-changelog class="salt-icon" /></template>
+                    <template #start><icon-changelog class="salt-icon" /></template>
                 </salt-item>
             </salt-rounded-column>
             <salt-rounded-column>
                 <salt-item text="Salt UI" @click="router.push('/tabs/mine/salt-demo')">
-                    <template #icon><icon-demo class="salt-icon" /></template>
+                    <template #start><icon-demo class="salt-icon" /></template>
                 </salt-item>
             </salt-rounded-column>
         </ion-content>
@@ -30,8 +30,7 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue';
-import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonContent, IonImg, onIonViewWillLeave } from '@ionic/vue';
+import { IonPage, IonHeader, IonContent, IonImg, onIonViewWillLeave, useIonRouter } from '@ionic/vue';
 import { SaltTitleBar, SaltItemOuterLargeTitle, SaltRoundedColumn, SaltYesNoDialog, SaltItem } from '@snewbie/salt-ui-vue'
 import {
     IconChangelog,
@@ -53,11 +52,15 @@ const model = reactive({
     },
 });
 
-const router = useRouter()
+const router = useIonRouter()
 const statusBar = useStatusBar()
 
 const onBack = () => {
-    router.push('/tabs/mine')
+    if (router.canGoBack()) {
+        router.back()
+    } else {
+        router.push('/tabs/mine')
+    }
 };
 
 const jump2 = async (url: string) => {
@@ -92,4 +95,4 @@ onIonViewWillLeave(() => {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-</style>@/composables
+</style>

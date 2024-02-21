@@ -4,12 +4,6 @@
       <salt-title-bar text="打卡" :show-back-btn="false" />
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">打卡</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <ExploreContainer name="打卡页面" />
     </ion-content>
   </ion-page>

@@ -9,7 +9,7 @@
                     confirm-text="确定" @open="statusBar.onDialogOpen" @close="statusBar.onDialogClose"
                     @confirm="clearAllCache" />
                 <salt-item text="清除缓存" @click="model.clearCacheDialog = true" :enabled="model.hasCache">
-                    <template #icon><icon-clear class="salt-icon" /></template>
+                    <template #start><icon-clear class="salt-icon" /></template>
                 </salt-item>
             </salt-rounded-column>
             <salt-rounded-column title="高德地图 Web 服务 Key">
@@ -21,8 +21,7 @@
 
 <script setup lang="ts">
 import { onBeforeMount, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonContent, onIonViewWillLeave } from '@ionic/vue';
+import { IonPage, IonHeader, IonContent, onIonViewWillLeave, useIonRouter } from '@ionic/vue';
 import { SaltTitleBar, SaltRoundedColumn, SaltItem, SaltItemEdit, SaltYesNoDialog } from '@snewbie/salt-ui-vue'
 import { IconClear } from '@/icons'
 import { WebView } from '@snewbie/capacitor-web-view';
@@ -33,7 +32,7 @@ const model = reactive({
     clearCacheDialog: false,
 });
 
-const router = useRouter()
+const router = useIonRouter()
 const preferences = usePreferences()
 const statusBar = useStatusBar()
 
@@ -46,7 +45,11 @@ onBeforeMount(async () => {
 })
 
 const onBack = () => {
-    router.push('/tabs/mine')
+    if (router.canGoBack()) {
+        router.back()
+    } else {
+        router.push('/tabs/mine')
+    }
 };
 
 const checkHasCache = async () => {
@@ -65,4 +68,4 @@ onIonViewWillLeave(() => {
 })
 </script>
 
-<style scoped></style>@/composables
+<style scoped></style>

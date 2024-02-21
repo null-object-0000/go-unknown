@@ -4,12 +4,6 @@
       <salt-title-bar text="出发" :show-back-btn="false" />
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">出发</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <ExploreContainer name="出发页面" />
     </ion-content>
   </ion-page>

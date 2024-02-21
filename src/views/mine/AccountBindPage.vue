@@ -45,8 +45,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeMount, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonContent, IonProgressBar, onIonViewWillLeave } from '@ionic/vue';
+import { IonPage, IonHeader, IonContent, IonProgressBar, onIonViewWillLeave, useIonRouter } from '@ionic/vue';
 import { SaltTitleBar, SaltRoundedColumn, SaltItemSwitcher, SaltYesNoDialog, SaltInputDialog } from '@snewbie/salt-ui-vue'
 import { WebView } from '@snewbie/capacitor-web-view';
 import { isNotHybrid, usePreferences, useStatusBar } from '@/composables'
@@ -54,7 +53,7 @@ import { CapacitorHttp } from '@capacitor/core';
 
 interface State { effective: boolean; userName: string; value: string }
 
-const router = useRouter()
+const router = useIonRouter()
 const preferences = usePreferences()
 const statusBar = useStatusBar()
 
@@ -249,7 +248,13 @@ onBeforeMount(async () => {
     model.state.jiangSuEtc = jiangSuEtc.value || model.state.jiangSuEtc
 })
 
-const onBack = () => router.push('/tabs/mine');
+const onBack = () => {
+    if (router.canGoBack()) {
+        router.back()
+    } else {
+        router.push('/tabs/mine')
+    }
+};
 
 const checkTask = ref<NodeJS.Timeout>()
 
@@ -369,4 +374,4 @@ onIonViewWillLeave(async () => {
 })
 </script>
 
-<style scoped></style>@/composables
+<style scoped></style>

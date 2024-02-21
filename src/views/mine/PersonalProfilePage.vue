@@ -12,13 +12,12 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonContent, onIonViewWillLeave } from '@ionic/vue';
+import { IonPage, IonHeader, IonContent, onIonViewWillLeave, useIonRouter } from '@ionic/vue';
 import { SaltTitleBar, SaltRoundedColumn, SaltItemEdit } from '@snewbie/salt-ui-vue'
 import { usePreferences } from '@/composables'
 import { onBeforeMount, ref } from 'vue';
 
-const router = useRouter()
+const router = useIonRouter()
 const preferences = usePreferences()
 
 const carPlate = ref<string | null>(null);
@@ -28,7 +27,11 @@ onBeforeMount(async () => {
 })
 
 const onBack = () => {
-    router.push('/tabs/mine')
+    if (router.canGoBack()) {
+        router.back()
+    } else {
+        router.push('/tabs/mine')
+    }
 };
 
 onIonViewWillLeave(() => {
@@ -36,4 +39,4 @@ onIonViewWillLeave(() => {
 })
 </script>
 
-<style scoped></style>@/composables
+<style scoped></style>

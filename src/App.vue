@@ -32,4 +32,3 @@ ion-content {
   height: var(--icon-size);
 }
 </style>
-@/composables
