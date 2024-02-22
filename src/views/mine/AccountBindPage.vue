@@ -23,7 +23,7 @@
                         @change="(value, _event) => change('govTrain12306', value)" />
                     <salt-input-dialog v-model="model.jiangSuEtcDialog.input" v-model:open="model.jiangSuEtcDialog.open"
                         title="X-APP-TOKEN" @open="statusBar.onDialogOpen" @close="statusBar.onDialogClose"
-                        @confirm="handlers.jiangSuEtc.checker" />
+                        @confirm="model.jiangSuEtcDialog.check" />
                     <salt-item-switcher v-model="model.state.jiangSuEtc.effective" text="江苏ETC"
                         :sub="model.state.jiangSuEtc.effective ? model.state.jiangSuEtc.userName : '尚未绑定'"
                         @change="jiangSuEtcChange" />
@@ -34,10 +34,7 @@
         <template v-else-if="model.mode === 'web-view'">
             <ion-content :fullscreen="true" style="--background: transparent">
                 <ion-progress-bar :value="progress"></ion-progress-bar>
-                <div id="mainWebView" ref="mainWebViewRef" :style="{ width: '100%', height: '65%' }"></div>
-                <div :style="{ width: '100%', height: '35%', fontSize: '11px', padding: '0 10px' }">
-                    <p v-for="log of logs" v-html="log"></p>
-                </div>
+                <div id="mainWebView" ref="mainWebViewRef" :style="{ width: '100%', height: '100%' }"></div>
             </ion-content>
         </template>
     </ion-page>
@@ -49,9 +46,16 @@ import { IonPage, IonHeader, IonContent, IonProgressBar, onIonViewWillLeave, use
 import { SaltTitleBar, SaltRoundedColumn, SaltItemSwitcher, SaltYesNoDialog, SaltInputDialog } from '@snewbie/salt-ui-vue'
 import { WebView } from '@snewbie/capacitor-web-view';
 import { isNotHybrid, usePreferences, useStatusBar } from '@/composables'
-import { CapacitorHttp } from '@capacitor/core';
+import {
+    AbstractAccountBindService,
+    DaMaiAccountBindService,
+    TcTravelAccountBindService,
+    CtripTravelAccountBindService,
+    GovTrain12306AccountBindService,
+    JiangSuEtcAccountBindService
+} from '@/services/AccountBindService'
 
-interface State { effective: boolean; userName: string; value: string }
+interface State { effective: boolean; userName: string; cookies: string; value: string }
 
 const router = useIonRouter()
 const preferences = usePreferences()
@@ -63,172 +67,55 @@ const ctripTravel = ref<State | null>(null);
 const govTrain12306 = ref<State | null>(null);
 const jiangSuEtc = ref<State | null>(null);
 
-const handlers = {
-    daMai: {
-        url: 'https://m.damai.cn/damai/minilogin/index.html?returnUrl=https%3A%2F%2Fm.damai.cn%2Fshows%2Fmine.html%3Fspm%3Da2o71.home.top.duserinfo&spm=a2o71.mydamai.0.0',
-        checker: async () => {
-            const cookie2 = await WebView.getCookie('https://m.damai.cn', 'cookie2')
-            const dm_nickname = await WebView.getCookie('https://m.damai.cn', 'dm_nickname')
-
-            log('getCookie', cookie2)
-
-            if (cookie2 && cookie2.length > 0 &&
-                dm_nickname && dm_nickname.length > 0) {
-                model.state.daMai.effective = true
-                model.state.daMai.userName = dm_nickname
-                model.state.daMai.value = cookie2
-
-                daMai.value = model.state.daMai
-                return true
-            } else {
-                return false
-            }
-        }
-    },
-    tcTravel: {
-        url: 'https://m.ly.com/passport/login.html?returnUrl=%2fmember%2f',
-        checker: async () => {
-            const cookie = await WebView.getCookie('https://m.ly.com', 'cnUser')
-
-            const keyValues = cookie.split('&').map(item => item.split('='))
-            const userName = keyValues.find(([key]) => key === 'nickName')?.[1]?.replace('+', ' ')
-            const token = keyValues.find(([key]) => key === 'token')?.[1]
-
-            log('getCookie', cookie)
-
-            if (token && token.length > 0 &&
-                userName && userName.length > 0) {
-                model.state.tcTravel.effective = true
-                model.state.tcTravel.userName = decodeURIComponent(userName)
-                model.state.tcTravel.value = token
-
-                tcTravel.value = model.state.tcTravel
-                return true
-            } else {
-                return false
-            }
-        }
-    },
-    ctripTravel: {
-        url: 'https://m.ctrip.com/webapp/myctrip',
-        checker: async () => {
-            const userNameDom = '#main > div > div.rn-scroller-vert.rn-view > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div.rn-text'
-
-            const cticket = await WebView.getCookie('https://m.ctrip.com', 'cticket')
-            const userName = JSON.parse(await webView.evaluateJavascript(`document.querySelector("${userNameDom}")?.textContent`) || 'null')
-
-            log('getCookie', cticket)
-
-            if (cticket && cticket.length > 0 &&
-                userName && userName.length > 0 && userName !== 'null') {
-                model.state.ctripTravel.effective = true
-                model.state.ctripTravel.userName = userName
-                model.state.ctripTravel.value = cticket
-
-                ctripTravel.value = model.state.ctripTravel
-                return true
-            } else {
-                return false
-            }
-        }
-    },
-    govTrain12306: {
-        url: 'https://kyfw.12306.cn/otn/view/index.html',
-        onLoad: async () => {
-            await webView.evaluateJavascript(`document.querySelector('.login-box').scrollIntoView()`)
-        },
-        checker: async () => {
-            const userNameDom = '#js-minHeight > div.welcome_data > div.welcome-tit > strong'
-
-            const govTrain12306TK = await WebView.getCookie("https://kyfw.12306.cn", 'uKey')
-            const govTrain12306UKey = await WebView.getCookie("https://kyfw.12306.cn/otn", 'tk')
-            const cookie = govTrain12306TK && govTrain12306TK.length > 0 && govTrain12306UKey && govTrain12306UKey.length > 0
-                ? JSON.stringify({ govTrain12306TK, govTrain12306UKey }) : undefined
-            const userName = JSON.parse(await webView.evaluateJavascript(`document.querySelector("${userNameDom}")?.textContent`) || 'null')
-
-            log('getCookie', govTrain12306TK + ' ' + govTrain12306UKey + ' ' + userName)
-
-            if (cookie && cookie.length > 0 &&
-                userName && userName.length > 0 && userName !== 'null') {
-                model.state.govTrain12306.effective = true
-                model.state.govTrain12306.userName = userName
-                model.state.govTrain12306.value = cookie
-
-                govTrain12306.value = model.state.govTrain12306
-                return true
-            } else {
-                return false
-            }
-        }
-    },
-    jiangSuEtc: {
-        url: 'https://etctoll.etczs.net',
-        checker: async () => {
-            const token = model.jiangSuEtcDialog.input
-
-            if (token && token.length > 0) {
-                model.state.jiangSuEtc.effective = true
-                model.state.jiangSuEtc.value = token
-
-                const response = await CapacitorHttp.post({
-                    url: "https://etctoll.etczs.net/etctollsapi/tolls/truck/bill/carlist",
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Referer': 'https://servicewechat.com/wxb17f5d5d01db8949/1317/page-frame.html',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36 MicroMessenger/7.0.20.1781 NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF XWEB/10448',
-                        'xweb_xhr': '1',
-                        'X-APP-ID': '1',
-                        'X-APP-VER': '6.4.240114',
-                        'X-APP-TOKEN': token
-                    }
-                })
-
-                const { data } = response.data as { data: { plateNo: string }[] }
-
-                const userName = data && data.length > 0 ? data[0].plateNo : null
-                if (!userName || userName.length === 0) {
-                    alert('X-APP-TOKEN 无效，请重新输入') // TODO: replace with a toast
-                    return false
-                }
-
-                model.state.jiangSuEtc.userName = userName
-                jiangSuEtc.value = model.state.jiangSuEtc
-                return true
-            } else {
-                return false
-            }
-        }
-    },
-} as { [key: string]: { url: string; onLoad?: () => Promise<void>; checker: () => Promise<boolean> } }
-
 const model = reactive({
     mode: 'default' as 'default' | 'web-view',
     unbindDialog: { open: false, key: '' },
-    jiangSuEtcDialog: { open: false, input: '' },
+    jiangSuEtcDialog: {
+        open: false, input: '',
+        async check() {
+            const { effective, userName, cookies, value } = await new JiangSuEtcAccountBindService().check(webView, model.jiangSuEtcDialog);
+
+            if (!effective) return;
+            if (!userName || !cookies || !value) return;
+
+            model.state.jiangSuEtc.effective = true;
+            model.state.jiangSuEtc.userName = userName;
+            model.state.jiangSuEtc.cookies = cookies;
+            model.state.jiangSuEtc.value = value;
+            jiangSuEtc.value = model.state.jiangSuEtc;
+
+            model.jiangSuEtcDialog.open = false;
+        }
+    },
     state: {
         daMai: {
             effective: false,
             userName: '',
+            cookies: '',
             value: ''
         },
         tcTravel: {
             effective: false,
             userName: '',
+            cookies: '',
             value: ''
         },
         ctripTravel: {
             effective: false,
             userName: '',
+            cookies: '',
             value: ''
         },
         govTrain12306: {
             effective: false,
             userName: '',
+            cookies: '',
             value: ''
         },
         jiangSuEtc: {
             effective: false,
             userName: '',
+            cookies: '',
             value: ''
         }
     } as { [key: string]: State }
@@ -265,32 +152,65 @@ const change = async (key: string, state: boolean) => {
         return
     }
 
-    const handler = handlers[key]
+    let handler: AbstractAccountBindService;
+
+    if (key === 'daMai') {
+        handler = new DaMaiAccountBindService()
+    } else if (key === 'tcTravel') {
+        handler = new TcTravelAccountBindService()
+    } else if (key === 'ctripTravel') {
+        handler = new CtripTravelAccountBindService()
+    } else if (key === 'govTrain12306') {
+        handler = new GovTrain12306AccountBindService()
+    } else if (key === 'jiangSuEtc') {
+        handler = new JiangSuEtcAccountBindService()
+    } else {
+        throw new Error('Unknown key')
+    }
 
     if (state) {
         model.mode = 'web-view'
 
         await nextTick()
-        await initWebView(handler)
+        await initWebView(handler.url)
 
         let onloadExecuted = false
-        checkTask.value ?? clearInterval(checkTask.value)
+        if (checkTask.value) clearInterval(checkTask.value)
         checkTask.value = setInterval(() => {
             if (!onloadExecuted && progress.value == 100) {
                 if (typeof handler.onLoad === 'function') {
-                    handler.onLoad()
+                    handler.onLoad(webView, model.state[key])
                 }
 
                 onloadExecuted = true
             }
 
-            handler.checker().then(async (result: boolean) => {
-                if (!result) return;
+            handler.check(webView, model.state[key]).then(async (args: { effective: boolean, userName?: string, cookies?: string, value?: string }) => {
+                if (!args || !args.effective) return;
+                if (!args.userName || !args.cookies || !args.value) return;
 
                 clearInterval(checkTask.value)
                 await webView.hide()
                 webView.disableTouch()
                 webView.destroy()
+
+                model.state[key].effective = true
+                model.state[key].userName = args.userName
+                model.state[key].cookies = args.cookies
+                model.state[key].value = args.value
+
+                if (key === 'daMai') {
+                    daMai.value = model.state[key]
+                } else if (key === 'tcTravel') {
+                    tcTravel.value = model.state[key]
+                } else if (key === 'ctripTravel') {
+                    ctripTravel.value = model.state[key]
+                } else if (key === 'govTrain12306') {
+                    govTrain12306.value = model.state[key]
+                } else if (key === 'jiangSuEtc') {
+                    jiangSuEtc.value = model.state[key]
+                }
+
                 model.mode = 'default'
             })
         }, 1500)
@@ -308,13 +228,13 @@ const jiangSuEtcChange = async () => {
     } else {
         model.state.jiangSuEtc.effective = true
         model.unbindDialog = { open: true, key: 'jiangSuEtc' }
-
     }
 }
 
 const unbind = (key: string) => {
     model.state[key].effective = false
     model.state[key].userName = ''
+    model.state[key].cookies = ''
     model.state[key].value = ''
 
     if (key === 'daMai') {
@@ -334,42 +254,35 @@ const mainWebViewRef = ref<HTMLElement | null>(null)
 
 let webView: WebView;
 
-const logs = ref<string[]>([])
 let progress = ref(0);
 
-const log = (event: string, msg?: string) => {
-    logs.value.unshift(`[${new Date().toLocaleTimeString()}][${event}]<br>${msg}`)
-}
-
-const initWebView = async (handler: { url: string, checker: () => Promise<boolean> }) => {
+const initWebView = async (url: string | null) => {
     if (model.mode !== 'web-view') return;
     if (!mainWebViewRef.value) return;
+    if (!url) return;
 
     webView = await WebView.create({
         id: 'main',
         element: mainWebViewRef.value,
-        config: { url: handler.url }
+        config: { url }
     });
 
     await webView.enableTouch()
     await webView.setOnPageStartedListener(() => {
         progress.value = 0;
-        log('onPageStarted')
     })
     await webView.setOnPageFinishedListener(() => {
         progress.value = 100;
-        log('onPageFinished')
     })
     await webView.setOnProgressChangedListener(({ newProgress }: { newProgress: number }) => {
         progress.value = newProgress;
-        log('onProgressChanged', `newProgress: ${newProgress}`)
     })
 }
 
 
 onIonViewWillLeave(async () => {
     window.SaltUI.clearAllRippleAnimate()
-    checkTask.value ?? clearInterval(checkTask.value)
+    if (checkTask.value) clearInterval(checkTask.value)
     webView?.destroy()
 })
 </script>

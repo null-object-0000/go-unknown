@@ -2,8 +2,10 @@
     <salt-ripple-effect :enabled="enabled" mix-blend-mode="exclusion"
         @click="(event: MouseEvent) => { if (enabled) emit('click', event) }">
         <div class="order-item" :class="[enabled ? 'enabled' : 'unenabled']">
-            <div class="start">{{ category }}</div>
-            <div style="flex: 1;">
+            <div class="start">
+                <span class="category">{{ category }}</span>
+            </div>
+            <div class="main">
                 <div class="top">
                     <div class="center title">
                         {{ title }}
@@ -13,7 +15,7 @@
                         <span style="font-size: 12px;">￥</span>{{ totalAmount }}
                     </div>
                 </div>
-                <div class="bottom">
+                <div class="bottom" v-if="firstDesc && firstDesc.length > 0">
                     <div class="center">{{ firstDesc }}</div>
                     <div style="flex: 0 0 12px;"></div>
                     <div class="end">
@@ -22,7 +24,7 @@
                         </template>
                     </div>
                 </div>
-                <div class="bottom" v-if="secondDesc && secondDesc.length > 0">
+                <div class="bottom" v-if="firstDesc && firstDesc.length > 0 && secondDesc && secondDesc.length > 0">
                     <div class="center">{{ secondDesc }}</div>
                     <div style="flex: 0 0 12px;"></div>
                     <div class="end">{{ showOrderStatusDesc }}</div>
@@ -77,14 +79,28 @@ const emit = defineEmits(['click'])
     padding: var(--salt-dimen-inner-vertical-padding) var(--salt-dimen-inner-horizontal-padding);
     display: flex;
     align-items: center;
+
+    --category-width: 25px;
 }
 
 .order-item .start {
-    flex: 0 0 48px;
+    width: var(--category-width);
     display: flex;
     align-items: center;
     margin-right: var(--salt-dimen-content-padding);
-    font-size: 11px;
+}
+
+.order-item .main {
+    width: calc(100% - var(--category-width) - var(--salt-dimen-inner-horizontal-padding));
+}
+
+.order-item .category {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--category-width);
+    font-size: 12px;
+    text-align: center;
 }
 
 .order-item .center {
@@ -102,7 +118,6 @@ const emit = defineEmits(['click'])
     font-size: var(--salt-text-style-main-font-size);
     line-height: var(--salt-text-style-main-line-height);
     color: var(--salt-color-text);
-    padding-bottom: 10px;
 }
 
 .order-item .bottom {
@@ -115,7 +130,7 @@ const emit = defineEmits(['click'])
 }
 
 .order-item .end {
-    flex: 0 0 65px;
+    flex: 0 0 48px;
     text-align: right;
 }
 

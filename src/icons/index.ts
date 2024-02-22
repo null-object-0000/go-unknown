@@ -9,6 +9,7 @@ import IconClear from '@/icons/clear.svg'
 import IconSetting from '@/icons/setting.svg'
 import IconChangelog from '@/icons/changelog.svg'
 import IconIdCard from '@/icons/id-card.svg'
+import IconReload from '@/icons/reload.svg'
 
 export {
     IconLocaltion,
@@ -21,5 +22,6 @@ export {
     IconClear,
     IconSetting,
     IconChangelog,
-    IconIdCard
+    IconIdCard,
+    IconReload
 }
