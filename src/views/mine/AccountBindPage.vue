@@ -28,6 +28,9 @@
                         :sub="model.state.jiangSuEtc.effective ? model.state.jiangSuEtc.userName : '尚未绑定'"
                         @change="jiangSuEtcChange" />
                     <salt-item-switcher text="易捷加油" sub="暂不支持" :enabled="false" />
+                    <salt-item-switcher v-model="model.state.jinDong.effective" text="京东"
+                        :sub="model.state.jinDong.effective ? model.state.jinDong.userName : '尚未绑定'"
+                        @change="(value, _event) => change('jinDong', value)" />
                 </salt-rounded-column>
             </ion-content>
         </template>
@@ -52,7 +55,8 @@ import {
     TcTravelAccountBindService,
     CtripTravelAccountBindService,
     GovTrain12306AccountBindService,
-    JiangSuEtcAccountBindService
+    JiangSuEtcAccountBindService,
+    JinDongAccountBindService
 } from '@/services/AccountBindService'
 
 interface State { effective: boolean; userName: string; cookies: string; value: string }
@@ -66,6 +70,7 @@ const tcTravel = ref<State | null>(null);
 const ctripTravel = ref<State | null>(null);
 const govTrain12306 = ref<State | null>(null);
 const jiangSuEtc = ref<State | null>(null);
+const jinDong = ref<State | null>(null);
 
 const model = reactive({
     mode: 'default' as 'default' | 'web-view',
@@ -117,6 +122,12 @@ const model = reactive({
             userName: '',
             cookies: '',
             value: ''
+        },
+        jinDong: {
+            effective: false,
+            userName: '',
+            cookies: '',
+            value: ''
         }
     } as { [key: string]: State }
 })
@@ -127,12 +138,14 @@ onBeforeMount(async () => {
     await preferences.objectWatch('Mine.AccountBind.CtripTravel', ctripTravel)
     await preferences.objectWatch('Mine.AccountBind.GovTrain12306', govTrain12306)
     await preferences.objectWatch('Mine.AccountBind.JiangSuEtc', jiangSuEtc)
+    await preferences.objectWatch('Mine.AccountBind.JinDong', jinDong)
 
     model.state.daMai = daMai.value || model.state.daMai
     model.state.tcTravel = tcTravel.value || model.state.tcTravel
     model.state.ctripTravel = ctripTravel.value || model.state.ctripTravel
     model.state.govTrain12306 = govTrain12306.value || model.state.govTrain12306
     model.state.jiangSuEtc = jiangSuEtc.value || model.state.jiangSuEtc
+    model.state.jinDong = jinDong.value || model.state.jinDong
 })
 
 const onBack = () => {
@@ -164,6 +177,8 @@ const change = async (key: string, state: boolean) => {
         handler = new GovTrain12306AccountBindService()
     } else if (key === 'jiangSuEtc') {
         handler = new JiangSuEtcAccountBindService()
+    } else if (key === 'jinDong') {
+        handler = new JinDongAccountBindService()
     } else {
         throw new Error('Unknown key')
     }
@@ -209,6 +224,8 @@ const change = async (key: string, state: boolean) => {
                     govTrain12306.value = model.state[key]
                 } else if (key === 'jiangSuEtc') {
                     jiangSuEtc.value = model.state[key]
+                } else if (key === 'jinDong') {
+                    jinDong.value = model.state[key]
                 }
 
                 model.mode = 'default'
@@ -247,6 +264,8 @@ const unbind = (key: string) => {
         govTrain12306.value = null
     } else if (key === 'jiangSuEtc') {
         jiangSuEtc.value = null
+    } else if (key === 'jinDong') {
+        jinDong.value = null
     }
 }
 

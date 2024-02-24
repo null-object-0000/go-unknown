@@ -10,14 +10,14 @@
                     <div class="center title">
                         {{ title }}
                     </div>
-                    <div style="flex: 0 0 12px;"></div>
+                    <div class="spacer"></div>
                     <div class="end">
                         <span style="font-size: 12px;">￥</span>{{ totalAmount }}
                     </div>
                 </div>
                 <div class="bottom" v-if="firstDesc && firstDesc.length > 0">
                     <div class="center">{{ firstDesc }}</div>
-                    <div style="flex: 0 0 12px;"></div>
+                    <div class="spacer"></div>
                     <div class="end">
                         <template v-if="!secondDesc || secondDesc.length <= 0">
                             {{ showOrderStatusDesc }}
@@ -26,7 +26,7 @@
                 </div>
                 <div class="bottom" v-if="firstDesc && firstDesc.length > 0 && secondDesc && secondDesc.length > 0">
                     <div class="center">{{ secondDesc }}</div>
-                    <div style="flex: 0 0 12px;"></div>
+                    <div class="spacer"></div>
                     <div class="end">{{ showOrderStatusDesc }}</div>
                 </div>
             </div>
@@ -127,6 +127,10 @@ const emit = defineEmits(['click'])
     line-height: var(--salt-text-style-sub-line-height);
 
     color: var(--salt-color-sub-text);
+}
+
+.order-item .spacer {
+    flex: 0 0 12px;
 }
 
 .order-item .end {

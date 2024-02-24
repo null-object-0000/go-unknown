@@ -136,3 +136,21 @@ export class JiangSuEtcAccountBindService extends AbstractAccountBindService {
         }
     }
 }
+
+export class JinDongAccountBindService extends AbstractAccountBindService {
+    public url = 'https://wqs.jd.com/my/accountv2.shtml';
+
+    public check = async (webView: WebView, model: any) => {
+        const cookies = await WebView.getCookie('https://wqs.jd.com')
+
+        const pt_pin = await WebView.getCookie('https://wqs.jd.com', 'pt_pin')
+        const pt_key = await WebView.getCookie('https://wqs.jd.com', 'pt_key')
+
+        if (pt_pin && pt_pin.length > 0 &&
+            pt_key && pt_key.length > 0) {
+            return { effective: true, userName: decodeURIComponent(pt_pin), cookies, value: pt_key }
+        } else {
+            return { effective: false }
+        }
+    }
+}
