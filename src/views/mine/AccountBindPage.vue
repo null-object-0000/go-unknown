@@ -81,7 +81,7 @@ const model = reactive({
             const { effective, userName, cookies, value } = await new JiangSuEtcAccountBindService().check(webView, model.jiangSuEtcDialog);
 
             if (!effective) return;
-            if (!userName || !cookies || !value) return;
+            if (!userName || !value) return;
 
             model.state.jiangSuEtc.effective = true;
             model.state.jiangSuEtc.userName = userName;

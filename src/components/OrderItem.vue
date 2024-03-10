@@ -134,7 +134,7 @@ const emit = defineEmits(['click'])
 }
 
 .order-item .end {
-    flex: 0 0 48px;
+    flex: 0 0 60px;
     text-align: right;
 }
 

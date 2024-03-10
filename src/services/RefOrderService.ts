@@ -305,15 +305,33 @@ export class CtripTravelRefOrderService extends AbstractRefOrderService {
                 OrderTotalPrice: number,
                 OrderStatusName: string,
                 BookingDate: string,
+                UsedTime: string,
 
                 OrderName: string,
+
+                PiaoOrderItems: {
+                    Address: string,
+                    UsageInstructions: string,
+                }[],
+
+                HotelOrderItems: {
+                    ToCityName: string,
+                    HotelAddress: string,
+                    RoomType: string,
+                }[],
+
+                ActivityOrderItems: [],
+
+                VacationOrderItems: {
+                    DepartureDate: string,
+                    EndDate: string,
+                }[],
             }[]
         }
 
         const results = [] as RefOrder[]
         for (const item of OrderEnities) {
-
-            results.push({
+            const order = {
                 category: '携程旅行',
 
                 orderId: item.OrderID,
@@ -322,7 +340,28 @@ export class CtripTravelRefOrderService extends AbstractRefOrderService {
                 createTime: new Date(Number.parseInt(item.BookingDate.replace('/Date(', '').replace('+0800)/', ''))),
 
                 title: item.OrderName
-            })
+            } as RefOrder
+
+            if (item.PiaoOrderItems.length > 0) {
+                const piaoItem = item.PiaoOrderItems[0]
+                order.firstDesc = piaoItem.Address
+                order.secondDesc = piaoItem.UsageInstructions
+            } else if (item.HotelOrderItems.length > 0) {
+                const hotelItem = item.HotelOrderItems[0]
+                order.firstDesc = hotelItem.ToCityName + hotelItem.HotelAddress
+                order.secondDesc = hotelItem.RoomType
+            } else if (item.ActivityOrderItems.length > 0) {
+                const useDate = new Date(Number.parseInt(item.UsedTime.replace('/Date(', '').replace('+0800)/', '')))
+                order.firstDesc = useDateFormat(useDate, 'YYYY-MM-DD').value
+            } else if (item.VacationOrderItems.length > 0) {
+                const vacationItem = item.VacationOrderItems[0]
+                const departureDate = new Date(Number.parseInt(vacationItem.DepartureDate.replace('/Date(', '').replace('+0800)/', '')))
+                const endDate = new Date(Number.parseInt(vacationItem.EndDate.replace('/Date(', '').replace('+0800)/', '')))
+
+                order.firstDesc = useDateFormat(departureDate, 'YYYY-MM-DD').value + ' 至 ' + useDateFormat(endDate, 'YYYY-MM-DD').value
+            }
+
+            results.push(order)
         }
 
         return results
@@ -466,6 +505,115 @@ export class GovTrain12306RefOrderService extends AbstractRefOrderService {
             const h_results = await this._innerQueryList('H')
             const results = [...g_results, ...h_results]
             setQueryListCache('GovTrain12306', results)
+            return results
+        } catch (error) {
+            console.error(error)
+            return []
+        }
+    }
+}
+
+export class JiangSuEtcRefOrderService extends AbstractRefOrderService {
+    _user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x6309092b) XWEB/8555';
+
+    private __addMonths = (date: Date, months: number) => {
+        // 如果已经是年底了，那么就直接加一年
+        if (date.getMonth() + months > 11) {
+            date.setFullYear(date.getFullYear() + 1)
+            date.setMonth(date.getMonth() + months - 12)
+        } else {
+            date.setMonth(date.getMonth() + months)
+        }
+
+        return date
+    }
+
+    private __innerQueryList = async (token: string, month: number, carInfo: { userCardId: number, plateNo: string, provinceId: number }, lastId?: number) => {
+        const response = await CapacitorHttp.post({
+            url: 'https://etctoll.etczs.net/etctollsapi/tolls/car/order/history',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Referer': 'https://servicewechat.com/wxb17f5d5d01db8949/1317/page-frame.html',
+                'User-Agent': this._user_agent,
+                'xweb_xhr': '1',
+                'X-APP-ID': '1',
+                'X-APP-VER': '6.4.240303',
+                'X-APP-TOKEN': token
+            },
+            data: {
+                startDate: month,
+                endDate: month,
+                provinceId: carInfo.provinceId,
+                plateNo: carInfo.plateNo,
+                userCardId: carInfo.userCardId,
+                id: lastId
+            }
+        })
+
+        console.log('carInfo', JSON.stringify(carInfo))
+
+        const { data } = response.data as {
+            data: {
+                id: number,
+                orderNo: string,
+                fee: number,
+                exitTime: string,
+                enterStation: string,
+                exitStation: string,
+                serviceTypeStr: string,
+            }[]
+        }
+
+        console.log('response.data', JSON.stringify(response.data))
+
+        const results = [] as RefOrder[]
+        for (const item of data) {
+            results.push({
+                category: '江苏ETC',
+
+                orderId: item.orderNo,
+                totalAmount: item.fee,
+                showOrderStatusDesc: '支付成功',
+                createTime: new Date(item.exitTime),
+
+                title: item.serviceTypeStr,
+                firstDesc: item.serviceTypeStr === '停车场' ? item.exitStation : (item.enterStation + ' - ' + item.exitStation)
+            })
+        }
+
+        if (results.length > 0) {
+            results.push(...await this.__innerQueryList(token, month, carInfo, data[data.length - 1].id))
+        }
+
+        return results
+    }
+
+    public queryList = async (clearCache = false) => {
+        try {
+            if (isNotHybrid) return []
+
+            const cached = getQueryListCache('JiangSuEtc')
+            if (cached && cached.length > 0 && !clearCache) return cached
+
+            const { value: preferenceValue } = await Preferences.get({ key: 'Mine.AccountBind.JiangSuEtc' })
+            const { value } = JSON.parse(preferenceValue || '{}')
+            const { token, userCardId, plateNo, provinceId } = JSON.parse(value || '{}')
+
+            const results = [] as RefOrder[]
+            const now = new Date()
+            let date = new Date(2022, 11, 1)
+            const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+            do {
+                const month = parseInt(useDateFormat(date, 'YYYYMM').value)
+                const monthResults = await this.__innerQueryList(token, month, { userCardId, plateNo, provinceId })
+                results.push(...monthResults)
+
+                date = this.__addMonths(date, 1)
+            } while (date.getTime() < endDate.getTime())
+
+            setQueryListCache('JiangSuEtc', results)
+
             return results
         } catch (error) {
             console.error(error)

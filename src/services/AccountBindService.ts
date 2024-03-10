@@ -112,24 +112,25 @@ export class JiangSuEtcAccountBindService extends AbstractAccountBindService {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36 MicroMessenger/7.0.20.1781 NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF XWEB/10448',
                     'xweb_xhr': '1',
                     'X-APP-ID': '1',
-                    'X-APP-VER': '6.4.240114',
+                    'X-APP-VER': '6.4.240303',
                     'X-APP-TOKEN': token
                 }
             })
 
-            const { data } = response.data as { data: { userCardId: number, plateNo: string }[] }
+            const { data } = response.data as { data: { userCardId: number, plateNo: string, provinceId: number }[] }
 
             const userCardId = data && data.length > 0 ? data[0].userCardId : null
-            const userName = data && data.length > 0 ? data[0].plateNo : null
-            if (!userName || userName.length === 0) {
+            const plateNo = data && data.length > 0 ? data[0].plateNo : null
+            const provinceId = data && data.length > 0 ? data[0].provinceId : null
+            if (!plateNo || plateNo.length === 0) {
                 alert('X-APP-TOKEN 无效，请重新输入') // TODO: replace with a toast
                 return { effective: false }
             }
 
             return {
-                effective: true, userName: userName,
+                effective: true, userName: plateNo,
                 cookies: '',
-                value: JSON.stringify({ token, userCardId })
+                value: JSON.stringify({ token, userCardId, plateNo, provinceId })
             }
         } else {
             return { effective: false }
